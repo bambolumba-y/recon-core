@@ -1,0 +1,60 @@
+name: Recon Core Android
+
+on:
+  push:
+    branches: [recon/main]
+    tags: ['v*-recon.*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '17'
+      - id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28
+      - name: Record toolchain
+        run: |
+          go version
+          echo "ndk=${{ steps.ndk.outputs.ndk-path }}"
+          git submodule status --recursive
+      - name: Build AAR
+        run: make android
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          CODE_VERSION: "-X github.com/hiddify/hiddify-core/v2/hcommon/constants.Version=${{ github.ref_name }}"
+      - name: Package
+        working-directory: bin
+        run: |
+          tar -czvf hiddify-lib-android.tar.gz hiddify-core.aar
+          sha256sum hiddify-lib-android.tar.gz hiddify-core.aar | tee SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hiddify-lib-android
+          path: |
+            bin/hiddify-lib-android.tar.gz
+            bin/SHA256SUMS
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin/hiddify-lib-android.tar.gz
+            bin/SHA256SUMS
+          generate_release_notes: false
