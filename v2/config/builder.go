@@ -277,8 +277,15 @@ func setOutbounds(options *option.Options, input *option.Options, opt *HiddifyOp
 			// URLs:      opt.ConnectionTestUrls,
 			// Interval:  badoption.Duration(opt.URLTestInterval.Duration()),
 			// IdleTimeout: badoption.Duration(opt.URLTestIdleTimeout.Duration()),
-			Tolerance: 1,
+			Tolerance: opt.Failover.Tolerance,
 			// IdleTimeout:               badoption.Duration(opt.URLTestInterval.Duration().Nanoseconds() * 3),
+			MinDwell:                  badoption.Duration(time.Duration(opt.Failover.MinDwell) * time.Second),
+			StallTimeout:              badoption.Duration(time.Duration(opt.Failover.StallTimeout) * time.Second),
+			StallThreshold:            opt.Failover.StallThreshold,
+			StallWindow:               badoption.Duration(time.Duration(opt.Failover.StallWindow) * time.Second),
+			RescueBatch:               opt.Failover.RescueBatch,
+			RescueTimeout:             badoption.Duration(time.Duration(opt.Failover.RescueTimeout) * time.Second),
+			ActiveCheckInterval:       badoption.Duration(time.Duration(opt.Failover.ActiveCheckInterval) * time.Second),
 			InterruptExistConnections: true,
 		},
 	}
@@ -405,10 +412,11 @@ func setExperimental(options *option.Options, hopt *HiddifyOptions) {
 			},
 
 			Monitoring: &option.MonitoringOptions{
-				URLs:           hopt.ConnectionTestUrls,
-				Interval:       badoption.Duration(hopt.URLTestInterval.Duration()),
-				DebounceWindow: badoption.Duration(time.Millisecond * 500),
-				IdleTimeout:    badoption.Duration(hopt.URLTestInterval.Duration().Nanoseconds() * 3),
+				URLs:                  hopt.ConnectionTestUrls,
+				Interval:              badoption.Duration(hopt.URLTestInterval.Duration()),
+				DebounceWindow:        badoption.Duration(time.Millisecond * 500),
+				IdleTimeout:           badoption.Duration(hopt.URLTestInterval.Duration().Nanoseconds() * 3),
+				DisableInterfaceSweep: hopt.DisableInterfaceSweep,
 			},
 		}
 	}

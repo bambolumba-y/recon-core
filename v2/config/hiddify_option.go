@@ -33,6 +33,8 @@ type HiddifyOptions struct {
 	DNSOptions
 	InboundOptions
 	URLTestOptions
+	Failover              FailoverOptions `json:",inline"`
+	DisableInterfaceSweep bool            `json:"disable-interface-sweep,omitempty" overridable:"true"`
 	RouteOptions
 }
 
@@ -64,6 +66,17 @@ type URLTestOptions struct {
 	ConnectionTestUrls []string          `json:"connection-test-urls,omitempty" overridable:"true"`
 	URLTestInterval    DurationInSeconds `json:"url-test-interval,omitempty" overridable:"true"`
 	// URLTestIdleTimeout DurationInSeconds `json:"url-test-idle-timeout"`
+}
+
+type FailoverOptions struct {
+	Tolerance           uint16 `json:"failover-tolerance,omitempty" overridable:"true"`
+	MinDwell            int    `json:"failover-min-dwell,omitempty" overridable:"true"`
+	StallTimeout        int    `json:"failover-stall-timeout,omitempty" overridable:"true"`
+	StallThreshold      int    `json:"failover-stall-threshold,omitempty" overridable:"true"`
+	StallWindow         int    `json:"failover-stall-window,omitempty" overridable:"true"`
+	RescueBatch         int    `json:"failover-rescue-batch,omitempty" overridable:"true"`
+	RescueTimeout       int    `json:"failover-rescue-timeout,omitempty" overridable:"true"`
+	ActiveCheckInterval int    `json:"failover-active-check-interval,omitempty" overridable:"true"`
 }
 
 type RouteOptions struct {
@@ -130,9 +143,20 @@ func DefaultHiddifyOptions() *HiddifyOptions {
 		},
 		URLTestOptions: URLTestOptions{
 			ConnectionTestUrl: "http://cp.cloudflare.com/",
-			URLTestInterval:   DurationInSeconds(600),
+			URLTestInterval:   DurationInSeconds(1800),
 			// URLTestIdleTimeout: DurationInSeconds(6000),
 		},
+		Failover: FailoverOptions{
+			Tolerance:           150,
+			MinDwell:            60,
+			StallTimeout:        8,
+			StallThreshold:      3,
+			StallWindow:         30,
+			RescueBatch:         6,
+			RescueTimeout:       5,
+			ActiveCheckInterval: 180,
+		},
+		DisableInterfaceSweep: true,
 		RouteOptions: RouteOptions{
 			ResolveDestination:     false,
 			IPv6Mode:               option.DomainStrategy(dns.DomainStrategyAsIS),
