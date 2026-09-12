@@ -107,16 +107,21 @@ func TestSelectorDefaultsToLowest(t *testing.T) {
 	if selector.Default != OutboundURLTestTag {
 		t.Fatalf("selector default = %q, want %q", selector.Default, OutboundURLTestTag)
 	}
-	var hasLowest, hasBalance bool
+	var hasLowest bool
 	for _, tag := range selector.Outbounds {
 		switch tag {
 		case OutboundURLTestTag:
 			hasLowest = true
 		case OutboundRoundRobinTag:
-			hasBalance = true
+			t.Fatalf("round-robin balancer must not be selectable: %v", selector.Outbounds)
 		}
 	}
-	if !hasLowest || !hasBalance {
-		t.Fatalf("both balancers must stay selectable: %v", selector.Outbounds)
+	if !hasLowest {
+		t.Fatalf("lowest-delay balancer must stay selectable: %v", selector.Outbounds)
+	}
+	for _, ob := range out.Outbounds {
+		if ob.Tag == OutboundRoundRobinTag {
+			t.Fatalf("round-robin balancer outbound must not be built")
+		}
 	}
 }

@@ -290,22 +290,6 @@ func setOutbounds(options *option.Options, input *option.Options, opt *HiddifyOp
 		},
 	}
 
-	balancer := option.Outbound{
-		Type: C.TypeBalancer,
-		Tag:  OutboundRoundRobinTag,
-		Options: &option.BalancerOutboundOptions{
-			Outbounds:            tags,
-			Strategy:             opt.BalancerStrategy,
-			DelayAcceptableRatio: 2,
-			// URL:       opt.ConnectionTestUrl,
-			// URLs:      opt.ConnectionTestUrls,
-			// Interval:  badoption.Duration(opt.URLTestInterval.Duration()),
-			// IdleTimeout: badoption.Duration(opt.URLTestIdleTimeout.Duration()),
-			Tolerance: 1,
-			// IdleTimeout:               badoption.Duration(opt.URLTestInterval.Duration().Nanoseconds() * 3),
-			InterruptExistConnections: true,
-		},
-	}
 	defaultSelect := tags[0]
 
 	for _, tag := range tags {
@@ -321,10 +305,11 @@ func setOutbounds(options *option.Options, input *option.Options, opt *HiddifyOp
 			selectorTags = append([]string{urlTest.Tag}, selectorTags...)
 			defaultSelect = urlTest.Tag
 		} else {
-			outbounds = append([]option.Outbound{balancer, urlTest}, outbounds...)
-			selectorTags = append([]string{urlTest.Tag, balancer.Tag}, selectorTags...)
-			// The lowest-delay balancer is the one carrying failover; the round-robin
-			// tag stays selectable but is no longer what a fresh profile starts on.
+			// Only the lowest-delay balancer is built: it carries failover and is the
+			// auto mode. Hiddify's round-robin "balance" entry is not offered, so the
+			// proxy list shows one auto entry and the servers.
+			outbounds = append([]option.Outbound{urlTest}, outbounds...)
+			selectorTags = append([]string{urlTest.Tag}, selectorTags...)
 			defaultSelect = urlTest.Tag
 		}
 	}
