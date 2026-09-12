@@ -33,8 +33,8 @@ type HiddifyOptions struct {
 	DNSOptions
 	InboundOptions
 	URLTestOptions
-	Failover              FailoverOptions `json:",inline"`
-	DisableInterfaceSweep bool            `json:"disable-interface-sweep,omitempty" overridable:"true"`
+	FailoverOptions
+	DisableInterfaceSweep bool `json:"disable-interface-sweep,omitempty" overridable:"true"`
 	RouteOptions
 }
 
@@ -146,7 +146,7 @@ func DefaultHiddifyOptions() *HiddifyOptions {
 			URLTestInterval:   DurationInSeconds(1800),
 			// URLTestIdleTimeout: DurationInSeconds(6000),
 		},
-		Failover: FailoverOptions{
+		FailoverOptions: FailoverOptions{
 			Tolerance:           150,
 			MinDwell:            60,
 			StallTimeout:        8,
