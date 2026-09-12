@@ -81,3 +81,42 @@ func TestLowestBalancerCarriesFailoverOptions(t *testing.T) {
 		t.Fatal("monitoring must carry disable_interface_sweep")
 	}
 }
+
+// TestSelectorDefaultsToLowest pins R6: a fresh profile must start on the lowest-delay balancer,
+// the only outbound that carries the failover controller, not on the round-robin one. Both stay
+// selectable.
+func TestSelectorDefaultsToLowest(t *testing.T) {
+	opt := DefaultHiddifyOptions()
+	input := option.Options{Outbounds: []option.Outbound{
+		{Type: C.TypeDirect, Tag: "s1", Options: &option.DirectOutboundOptions{}},
+		{Type: C.TypeDirect, Tag: "s2", Options: &option.DirectOutboundOptions{}},
+	}}
+	out, err := BuildConfig(context.Background(), opt, &ReadOptions{Options: &input})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var selector *option.SelectorOutboundOptions
+	for _, ob := range out.Outbounds {
+		if ob.Tag == OutboundSelectTag {
+			selector = ob.Options.(*option.SelectorOutboundOptions)
+		}
+	}
+	if selector == nil {
+		t.Fatal("selector missing")
+	}
+	if selector.Default != OutboundURLTestTag {
+		t.Fatalf("selector default = %q, want %q", selector.Default, OutboundURLTestTag)
+	}
+	var hasLowest, hasBalance bool
+	for _, tag := range selector.Outbounds {
+		switch tag {
+		case OutboundURLTestTag:
+			hasLowest = true
+		case OutboundRoundRobinTag:
+			hasBalance = true
+		}
+	}
+	if !hasLowest || !hasBalance {
+		t.Fatalf("both balancers must stay selectable: %v", selector.Outbounds)
+	}
+}

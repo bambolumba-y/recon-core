@@ -323,8 +323,9 @@ func setOutbounds(options *option.Options, input *option.Options, opt *HiddifyOp
 		} else {
 			outbounds = append([]option.Outbound{balancer, urlTest}, outbounds...)
 			selectorTags = append([]string{urlTest.Tag, balancer.Tag}, selectorTags...)
-			defaultSelect = balancer.Tag
-
+			// The lowest-delay balancer is the one carrying failover; the round-robin
+			// tag stays selectable but is no longer what a fresh profile starts on.
+			defaultSelect = urlTest.Tag
 		}
 	}
 	selector := option.Outbound{
